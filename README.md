@@ -48,6 +48,17 @@ A Flutter application demonstrating **Pure Clean Architecture** with authenticat
 3. **Domain Validators** - Business rules live in domain layer
 4. **Stream-Based State** - Native Dart `Stream<State>` pattern
 
+### Why Cubits Are in Data Layer (Not UI)
+
+**Architectural Debate:** While Cubits only depend on domain interfaces (making UI layer placement valid), this project places them in the data layer for these reasons:
+
+1. **UI Remains Untouchable** - Switch from Cubit to Riverpod/GetX/Redux without changing UI code
+2. **Easier Testing** - Test Cubits independently from Flutter widgets
+3. **Reusable Across UIs** - Same Cubits can power Flutter UI, CLI apps, or web dashboards
+4. **Not UI-Specific** - Cubits orchestrate data operations and business logic, not UI rendering
+
+**Philosophy:** Cubits are implementation details of business logic (the "how"), not presentation layer (the "what to show"). They belong with repositories as data orchestrators, keeping UI purely about widgets and user interactions.
+
 ### Standard BLoC ❌ vs Our Approach ✅
 
 ```dart
