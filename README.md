@@ -1,206 +1,199 @@
 # Robot Analytics Chart App
 
-A Flutter application for tracking and visualizing robot activity data with authentication and clean architecture.
+A Flutter application demonstrating **Pure Clean Architecture** with authentication and chart visualization. The UI depends only on domain abstractions using native Dart Streams instead of BLoC widgets.
 
 ## Features
 
-- **Authentication System**
-  - Splash screen with automatic login detection
-  - Login page with username/password validation
-  - Character validation for usernames (blocks special characters like &, ^, %, etc.)
-  - Persistent login state using local storage
+- **Authentication**: Splash screen, login with validation, persistent state
+- **Chart Visualization**: Custom-drawn line chart with gradient, statistics (avg/max/min)
+- **Data Management**: Add data via bottom sheet, duplicate date validation, real-time updates
 
-- **Chart Visualization**
-  - Custom-drawn line chart with gradient fill
-  - Displays robot hours active per day (converts minutes to hours)
-  - Interactive data points with statistics (average, max, min)
-  - Sorted chronological data display
-
-- **Data Management**
-  - Add new data points via bottom sheet
-  - Date picker with forward/backward navigation
-  - Duplicate date validation
-  - Real-time chart updates with loading indicators
+**Login Credentials:** `Lely` / `LelyControl2`
 
 ## Architecture
 
-This project follows **Clean Architecture** principles with three distinct layers:
+### Clean Architecture Overview
 
-### Domain Layer
-- Contains business logic and models
-- No dependencies on other layers
-- Defines interfaces (e.g., `AuthIO`, `ChartRepository`)
-- Pure Dart code
+```
+┌─────────────────────────────────────────────────────────────┐
+│                         UI Layer                             │
+│  SplashPage │ LoginPage │ ChartPage                          │
+│       │           │           │                              │
+│       └───StreamBuilder/StreamListener───┐                   │
+│                                          ▼                   │
+│                                   Domain IO Interfaces       │
+│                                   (AuthIO, ChartIO)          │
+└─────────────────────────────────────────────────────────────┘
+                            │ depends on
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      Domain Layer                            │
+│  AuthIO/ChartIO Interfaces │ Validators │ Models & States    │
+│  AuthRepo/ChartRepo Interfaces                               │
+│  No dependencies - Pure Dart code                            │
+└─────────────────────────────────────────────────────────────┘
+                            ▲ implements
+┌─────────────────────────────────────────────────────────────┐
+│                      Data Layer                              │
+│  AuthRepoImpl │ ChartRepoImpl │ AuthCubit │ ChartCubit       │
+│                                     │                        │
+│                              SharedPreferences               │
+└─────────────────────────────────────────────────────────────┘
+```
 
-### Data Layer
-- Implements repositories and data sources
-- Depends only on the domain layer
-- Uses Cubit for state management
-- Handles data persistence with SharedPreferences
+### Key Principles
 
-### UI Layer
-- Contains all Flutter widgets and pages
-- Depends only on the domain layer
-- Implements BLoC pattern with Cubits
-- Three main pages: Splash, Login, Chart
+1. **UI Depends Only on Domain** - NO BlocConsumer/BlocBuilder, uses `StreamBuilder` instead
+2. **Interface-Based DI** - `RepositoryProvider` provides interfaces, not implementations
+3. **Domain Validators** - Business rules live in domain layer
+4. **Stream-Based State** - Native Dart `Stream<State>` pattern
+
+### Standard BLoC ❌ vs Our Approach ✅
+
+```dart
+// Standard BLoC - UI depends on data layer
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../data/auth_cubit.dart'; // DATA LAYER IMPORT!
+BlocConsumer<AuthCubit, AuthState>(...)
+
+// Our Approach - UI depends only on domain
+import '../domain/auth_io.dart'; // DOMAIN LAYER ONLY!
+StreamBuilder<AuthState>(
+  stream: context.read<AuthIO>().authStateStream,
+  builder: ...,
+)
+```
 
 ### Folder Structure
 
 ```
 lib/
-├── app/
-│   └── app.dart                    # Main app configuration & DI
+├── app/app.dart                    # DI & app configuration
 ├── features/
 │   ├── auth/
 │   │   ├── domain/
 │   │   │   ├── models/             # User, AuthState
-│   │   │   └── auth_io.dart        # Auth interface
+│   │   │   ├── validators/         # UsernameValidator
+│   │   │   ├── auth_io.dart        # Business logic interface
+│   │   │   └── auth_repository.dart # Data access interface
 │   │   ├── data/
-│   │   │   ├── auth_repository.dart
-│   │   │   └── auth_cubit.dart
+│   │   │   ├── auth_repository_impl.dart
+│   │   │   └── auth_cubit.dart     # Implements AuthIO
 │   │   └── ui/
 │   │       ├── splash_page.dart
 │   │       └── login_page.dart
 │   └── chart/
 │       ├── domain/
-│       │   ├── models/             # RobotDataPoint
-│       │   └── repository/         # ChartRepository interface
+│       │   ├── models/             # RobotDataPoint, ChartState
+│       │   ├── chart_io.dart       # Business logic interface
+│       │   └── chart_repository.dart # Data access interface
 │       ├── data/
 │       │   ├── chart_repository_impl.dart
-│       │   └── chart_cubit.dart
+│       │   └── chart_cubit.dart    # Implements ChartIO
 │       └── ui/
 │           ├── chart_page.dart
 │           └── widgets/
-│               ├── custom_line_chart.dart
-│               └── add_data_bottom_sheet.dart
 └── main.dart
 ```
 
-## Dependencies
+## State Management Flow
 
-- `flutter_bloc` (^8.1.6) - State management
-- `equatable` (^2.0.5) - Value equality
-- `shared_preferences` (^2.3.5) - Local storage
-- `intl` (^0.19.0) - Date formatting
-- `bloc_test` (^9.1.7) - Testing Cubits
-- `mocktail` (^1.0.4) - Mocking for tests
+### Authentication Flow
+```
+User clicks login
+  → UI calls context.read<AuthIO>().login()
+  → AuthCubit validates with UsernameValidator (domain)
+  → AuthCubit calls AuthRepository.login() (data)
+  → AuthCubit emits AuthAuthenticated/AuthError
+  → Stream<AuthState> updates
+  → StreamBuilder rebuilds UI
+  → StreamSubscription triggers navigation/snackbar
+```
+
+### Chart Data Flow
+```
+User adds data
+  → UI calls context.read<ChartIO>().addDataPoint()
+  → ChartCubit checks dateExists() via ChartRepository
+  → If duplicate: emit(ChartError) then restore state
+  → If valid: save via ChartRepository then reload
+  → Stream<ChartState> updates
+  → StreamBuilder rebuilds, StreamSubscription shows snackbar
+```
 
 ## Getting Started
 
 ### Prerequisites
-
 - Flutter SDK (^3.9.2)
 - Dart SDK (^3.9.2)
 
 ### Installation
-
-1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone git@github.com:Pr0nE/chart_example_flutter.git
 cd chart_example_flutter
-```
-
-2. Install dependencies:
-```bash
 flutter pub get
-```
-
-3. Run the app:
-```bash
 flutter run
 ```
 
-**Note for WSL/Windows users:** If you encounter line ending issues with Flutter commands, you can either:
-- Run the provided setup script: `bash setup.sh`
-- Or manually run: `dos2unix $(which flutter)` before running flutter commands
+**WSL/Windows users:** Run `bash setup.sh` if you encounter line ending issues.
 
-## Login Credentials
-
-Use the following credentials to log in:
-
-- **Username:** `Lely`
-- **Password:** `LelyControl2`
-
-## Sample Data
-
-The app comes pre-loaded with sample data:
-```json
-{
-  "Collector": {
-    "10/08/2025": "100 min",
-    "10/09/2025": "60 min",
-    "10/10/2025": "180 min",
-    "10/11/2025": "120 min",
-    "10/12/2025": "90 min",
-    "10/13/2025": "150 min",
-    "10/14/2025": "200 min"
-  }
-}
-```
+### Dependencies
+- `flutter_bloc` (^8.1.6) - State management
+- `equatable` (^2.0.5) - Value equality
+- `shared_preferences` (^2.3.5) - Local storage
+- `intl` (^0.19.0) - Date formatting
+- `bloc_test` (^9.1.7) - Testing
+- `mocktail` (^1.0.4) - Mocking
 
 ## Testing
 
-The project includes comprehensive unit and widget tests.
-
-### Run all tests:
 ```bash
-flutter test
+flutter test                         # All tests
+flutter test test/features/auth/     # Auth tests only
+flutter test test/features/chart/    # Chart tests only
 ```
 
-### Run specific test suites:
-```bash
-# Auth tests
-flutter test test/features/auth/
+**Coverage:**
+- Repository tests with mocked SharedPreferences
+- Validator tests (pure domain logic)
+- Cubit tests with bloc_test
+- Widget tests with StreamBuilder rendering
 
-# Chart tests
-flutter test test/features/chart/
-```
+## Implementation Checklist
 
-### Test Coverage:
-- Unit tests for repositories and cubits
-- Widget tests for UI components
-- Integration tests for user flows
+When adding a new feature:
 
-## Key Implementation Details
+**Domain Layer:**
+- [ ] Create models/states
+- [ ] Define repository interface (data access)
+- [ ] Define IO interface (business logic)
+- [ ] Create validators if needed
 
-### Custom Line Chart
-The chart is drawn using Flutter's `CustomPainter` API with:
-- Gradient fill from line to x-axis
-- Smooth line rendering
-- Interactive data points
-- Dynamic scaling based on data range
-- Grid lines and axis labels
+**Data Layer:**
+- [ ] Implement repository (data persistence)
+- [ ] Implement IO interface (Cubit or custom)
+- [ ] Use domain validators
 
-### State Management
-- Uses Cubit (simplified BLoC) for state management
-- Reactive UI updates based on state changes
-- Separation of business logic from UI
+**UI Layer:**
+- [ ] Use StreamBuilder for rendering
+- [ ] Use StreamSubscription for side effects
+- [ ] Import only from domain layer
 
-### Validation
-- Real-time username validation
-- Prevents invalid characters during input
-- Duplicate date detection when adding data
-- Form validation for all user inputs
+**DI:**
+- [ ] Provide repository interface via RepositoryProvider
+- [ ] Provide IO interface via RepositoryProvider
+- [ ] Never provide concrete implementations
 
-## Project Highlights
+## Benefits
 
-- Clean separation of concerns
-- Feature-based folder structure
-- Dependency injection with BLoC providers
-- Comprehensive test coverage
-- Custom chart implementation (no external chart library)
-- Gradient fill visualization
-- Responsive UI design
+1. **Zero UI-Data Coupling** - UI depends only on domain abstractions
+2. **Framework Independence** - Can swap BLoC/Cubit for any solution
+3. **Testability** - Each layer tests independently
+4. **Maintainability** - Changes isolated to single layer
+5. **Flexibility** - Swap implementations without touching UI
 
-## Future Enhancements
+## Development Notes
 
-- Data export functionality
-- Multiple chart types
-- Date range filtering
-- User profile management
-- API integration
-- Dark mode support
+**Architecture Design:** All architectural concepts, patterns, and design decisions are original human work.
 
-## License
-
-This project is created for demonstration purposes.
+**AI-Assisted Development:** AI tools used only for boilerplate code, test cases, and CustomPainter implementation.
