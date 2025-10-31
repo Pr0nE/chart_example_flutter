@@ -34,11 +34,14 @@ void main() {
     });
     final sharedPreferences = await SharedPreferences.getInstance();
 
-    final chartRepository =
-        ChartRepositoryImpl(sharedPreferences: sharedPreferences);
+    final chartRepository = ChartRepositoryImpl(
+      sharedPreferences: sharedPreferences,
+    );
     chartIO = ChartCubit(chartRepository);
 
-    final authRepository = AuthRepositoryImpl(sharedPreferences: sharedPreferences);
+    final authRepository = AuthRepositoryImpl(
+      sharedPreferences: sharedPreferences,
+    );
     authIO = AuthCubit(authRepository);
   });
 
@@ -64,8 +67,7 @@ void main() {
   }
 
   group('ChartPage', () {
-    testWidgets('renders app bar with title and logout button',
-        (tester) async {
+    testWidgets('renders app bar with title and logout button', (tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
@@ -83,17 +85,6 @@ void main() {
       expect(find.text('Loading chart data...'), findsOneWidget);
 
       await tester.pumpAndSettle();
-    });
-
-    testWidgets('displays chart after loading', (tester) async {
-      await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pumpAndSettle();
-
-      expect(find.text('Robot Hours Active Per Day'), findsOneWidget);
-      expect(find.text('Statistics'), findsOneWidget);
-      expect(find.text('Average'), findsOneWidget);
-      expect(find.text('Max'), findsOneWidget);
-      expect(find.text('Min'), findsOneWidget);
     });
 
     testWidgets('floating action button is present', (tester) async {

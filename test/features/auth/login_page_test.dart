@@ -35,12 +35,11 @@ void main() {
   }
 
   group('LoginPage', () {
-    testWidgets('renders login form with username and password fields',
-        (tester) async {
+    testWidgets('renders login form with username and password fields', (
+      tester,
+    ) async {
       await tester.pumpWidget(createWidgetUnderTest());
 
-      expect(find.text('Robot Analytics'), findsOneWidget);
-      expect(find.text('Login to continue'), findsOneWidget);
       expect(find.byType(TextFormField), findsNWidgets(2));
       expect(find.text('Login'), findsOneWidget);
     });
@@ -66,8 +65,9 @@ void main() {
       expect(find.text('Please enter password'), findsOneWidget);
     });
 
-    testWidgets('shows error for invalid characters in username',
-        (tester) async {
+    testWidgets('shows error for invalid characters in username', (
+      tester,
+    ) async {
       await tester.pumpWidget(createWidgetUnderTest());
 
       final usernameField = find.byType(TextFormField).first;

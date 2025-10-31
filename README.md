@@ -5,7 +5,7 @@ A Flutter application demonstrating **Pure Clean Architecture** with authenticat
 ## Features
 
 - **Authentication**: Splash screen, login with validation, persistent state
-- **Chart Visualization**: Custom-drawn line chart with gradient, statistics (avg/max/min)
+- **Chart Visualization**: Custom-drawn line chart with gradient fill, grid lines, axis labels
 - **Data Management**: Add data via bottom sheet, duplicate date validation, real-time updates
 
 **Login Credentials:** `Lely` / `LelyControl2`
