@@ -107,54 +107,13 @@ lib/
 └── main.dart
 ```
 
-## State Management Flow
+## Benefits
 
-### Authentication Flow
-```
-User clicks login
-  → UI calls context.read<AuthIO>().login()
-  → AuthCubit validates with UsernameValidator (domain)
-  → AuthCubit calls AuthRepository.login() (data)
-  → AuthCubit emits AuthAuthenticated/AuthError
-  → Stream<AuthState> updates
-  → StreamBuilder rebuilds UI
-  → StreamSubscription triggers navigation/snackbar
-```
-
-### Chart Data Flow
-```
-User adds data
-  → UI calls context.read<ChartIO>().addDataPoint()
-  → ChartCubit checks dateExists() via ChartRepository
-  → If duplicate: emit(ChartError) then restore state
-  → If valid: save via ChartRepository then reload
-  → Stream<ChartState> updates
-  → StreamBuilder rebuilds, StreamSubscription shows snackbar
-```
-
-## Getting Started
-
-### Prerequisites
-- Flutter SDK (^3.9.2)
-- Dart SDK (^3.9.2)
-
-### Installation
-```bash
-git clone git@github.com:Pr0nE/chart_example_flutter.git
-cd chart_example_flutter
-flutter pub get
-flutter run
-```
-
-**WSL/Windows users:** Run `bash setup.sh` if you encounter line ending issues.
-
-### Dependencies
-- `flutter_bloc` (^8.1.6) - State management
-- `equatable` (^2.0.5) - Value equality
-- `shared_preferences` (^2.3.5) - Local storage
-- `intl` (^0.19.0) - Date formatting
-- `bloc_test` (^9.1.7) - Testing
-- `mocktail` (^1.0.4) - Mocking
+1. **Zero UI-Data Coupling** - UI depends only on domain abstractions
+2. **Framework Independence** - Can swap BLoC/Cubit for any solution
+3. **Testability** - Each layer tests independently
+4. **Maintainability** - Changes isolated to single layer
+5. **Flexibility** - Swap implementations without touching UI
 
 ## Testing
 
@@ -169,42 +128,3 @@ flutter test test/features/chart/    # Chart tests only
 - Validator tests (pure domain logic)
 - Cubit tests with bloc_test
 - Widget tests with StreamBuilder rendering
-
-## Implementation Checklist
-
-When adding a new feature:
-
-**Domain Layer:**
-- [ ] Create models/states
-- [ ] Define repository interface (data access)
-- [ ] Define IO interface (business logic)
-- [ ] Create validators if needed
-
-**Data Layer:**
-- [ ] Implement repository (data persistence)
-- [ ] Implement IO interface (Cubit or custom)
-- [ ] Use domain validators
-
-**UI Layer:**
-- [ ] Use StreamBuilder for rendering
-- [ ] Use StreamSubscription for side effects
-- [ ] Import only from domain layer
-
-**DI:**
-- [ ] Provide repository interface via RepositoryProvider
-- [ ] Provide IO interface via RepositoryProvider
-- [ ] Never provide concrete implementations
-
-## Benefits
-
-1. **Zero UI-Data Coupling** - UI depends only on domain abstractions
-2. **Framework Independence** - Can swap BLoC/Cubit for any solution
-3. **Testability** - Each layer tests independently
-4. **Maintainability** - Changes isolated to single layer
-5. **Flexibility** - Swap implementations without touching UI
-
-## Development Notes
-
-**Architecture Design:** All architectural concepts, patterns, and design decisions are original human work.
-
-**AI-Assisted Development:** AI tools used only for boilerplate code, test cases, and CustomPainter implementation.
