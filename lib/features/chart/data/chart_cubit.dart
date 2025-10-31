@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../domain/chart_io.dart';
-import '../domain/models/chart_state.dart';
+import '../domain/chart_state.dart';
 import '../domain/models/robot_data_point.dart';
 import '../domain/repository/chart_repository.dart';
 

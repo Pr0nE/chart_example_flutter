@@ -1,4 +1,4 @@
-import 'models/chart_state.dart';
+import 'chart_state.dart';
 
 abstract class ChartIO {
   Stream<ChartState> get chartStateStream;

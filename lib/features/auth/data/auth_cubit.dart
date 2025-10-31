@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../domain/auth_io.dart';
-import '../domain/models/auth_state.dart';
+import '../domain/auth_state.dart';
 import '../domain/repository/auth_repository.dart';
 import '../domain/validators/username_validator.dart';
 

@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:chart_example_flutter/features/auth/domain/auth_io.dart';
-import 'package:chart_example_flutter/features/auth/domain/models/auth_state.dart';
+import 'package:chart_example_flutter/features/auth/domain/auth_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

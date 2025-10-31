@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../auth/domain/auth_io.dart';
 import '../domain/chart_io.dart';
-import '../domain/models/chart_state.dart';
+import '../domain/chart_state.dart';
 import 'widgets/add_data_bottom_sheet.dart';
 import 'widgets/custom_line_chart.dart';
 

@@ -1,4 +1,4 @@
-import 'models/auth_state.dart';
+import 'auth_state.dart';
 
 abstract class AuthIO {
   Stream<AuthState> get authStateStream;

@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:chart_example_flutter/features/chart/data/chart_cubit.dart';
 import 'package:chart_example_flutter/features/chart/data/chart_repository_impl.dart';
-import 'package:chart_example_flutter/features/chart/domain/models/chart_state.dart';
+import 'package:chart_example_flutter/features/chart/domain/chart_state.dart';
 
 void main() {
   late ChartCubit chartCubit;
