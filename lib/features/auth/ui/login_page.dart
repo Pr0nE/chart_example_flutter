@@ -98,12 +98,7 @@ class _LoginPageState extends State<LoginPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Login to continue',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
+
                     const SizedBox(height: 48),
                     TextFormField(
                       controller: _usernameController,
@@ -171,29 +166,6 @@ class _LoginPageState extends State<LoginPage> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Text('Login', style: TextStyle(fontSize: 16)),
-                    ),
-                    const SizedBox(height: 24),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Test Credentials:',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Text('Username: Lely'),
-                          Text('Password: LelyControl2'),
-                        ],
-                      ),
                     ),
                   ],
                 ),

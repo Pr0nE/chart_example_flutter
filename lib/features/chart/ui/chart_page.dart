@@ -75,6 +75,7 @@ class _ChartPageState extends State<ChartPage> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('Robot Activity Chart'),
         actions: [
           IconButton(
@@ -109,32 +110,6 @@ class _ChartPageState extends State<ChartPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Card(
-                    elevation: 4,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Robot Hours Active Per Day',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Total data points: ${state.data.length}',
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: 16),
                   Expanded(
                     child: Card(
@@ -145,54 +120,13 @@ class _ChartPageState extends State<ChartPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Card(
-                    elevation: 4,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Statistics',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              _StatItem(
-                                label: 'Average',
-                                value: _calculateAverage(state.data),
-                                unit: 'hrs',
-                              ),
-                              _StatItem(
-                                label: 'Max',
-                                value: _calculateMax(state.data),
-                                unit: 'hrs',
-                              ),
-                              _StatItem(
-                                label: 'Min',
-                                value: _calculateMin(state.data),
-                                unit: 'hrs',
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 100),
                 ],
               ),
             );
           }
 
-          return const Center(
-            child: Text('No data available'),
-          );
+          return const Center(child: Text('No data available'));
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -200,73 +134,6 @@ class _ChartPageState extends State<ChartPage> {
         icon: const Icon(Icons.add),
         label: const Text('Add Data'),
       ),
-    );
-  }
-
-  String _calculateAverage(data) {
-    if (data.isEmpty) return '0.0';
-    final sum = data.fold(0.0, (sum, point) => sum + point.hoursActive);
-    return (sum / data.length).toStringAsFixed(1);
-  }
-
-  String _calculateMax(data) {
-    if (data.isEmpty) return '0.0';
-    final max = data.map((e) => e.hoursActive).reduce((a, b) => a > b ? a : b);
-    return max.toStringAsFixed(1);
-  }
-
-  String _calculateMin(data) {
-    if (data.isEmpty) return '0.0';
-    final min = data.map((e) => e.hoursActive).reduce((a, b) => a < b ? a : b);
-    return min.toStringAsFixed(1);
-  }
-}
-
-class _StatItem extends StatelessWidget {
-  final String label;
-  final String value;
-  final String unit;
-
-  const _StatItem({
-    required this.label,
-    required this.value,
-    required this.unit,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade600,
-          ),
-        ),
-        const SizedBox(height: 4),
-        RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: value,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue,
-                ),
-              ),
-              TextSpan(
-                text: ' $unit',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }
