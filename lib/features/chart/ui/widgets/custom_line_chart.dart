@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:chart_example_flutter/features/chart/domain/models/robot_data_point.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' as intl;
@@ -15,6 +17,45 @@ class CustomLineChart extends StatefulWidget {
 class _CustomLineChartState extends State<CustomLineChart> {
   int? _hoveredIndex;
   Offset? _tapPosition;
+  double _zoomLevel = 1.0;
+  final ScrollController _scrollController = ScrollController();
+
+  static const double _minZoom = 1.0;
+  static const double _maxZoom = 5.0;
+  static const double _zoomStep = 0.5;
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _zoomIn() {
+    setState(() {
+      if (_zoomLevel < _maxZoom) {
+        _zoomLevel = math.min(_zoomLevel + _zoomStep, _maxZoom);
+      }
+    });
+  }
+
+  void _zoomOut() {
+    setState(() {
+      if (_zoomLevel > _minZoom) {
+        _zoomLevel = math.max(_zoomLevel - _zoomStep, _minZoom);
+      }
+    });
+  }
+
+  void _resetZoom() {
+    setState(() {
+      _zoomLevel = _minZoom;
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(0);
+      }
+    });
+  }
+
+  bool get _isZoomed => _zoomLevel > _minZoom;
 
   @override
   Widget build(BuildContext context) {
@@ -24,47 +65,143 @@ class _CustomLineChartState extends State<CustomLineChart> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        return GestureDetector(
-          onTapDown: (details) {
-            _handleTap(
-              details.localPosition,
-              constraints.maxWidth,
-              constraints.maxHeight,
-            );
-          },
-          onTapUp: (_) {
-            setState(() {
-              _hoveredIndex = null;
-              _tapPosition = null;
-            });
-          },
-          child: MouseRegion(
-            onHover: (event) {
-              _handleHover(
-                event.localPosition,
-                constraints.maxWidth,
-                constraints.maxHeight,
-              );
-            },
-            onExit: (_) {
-              setState(() {
-                _hoveredIndex = null;
-                _tapPosition = null;
-              });
-            },
-            child: Stack(
-              children: [
-                CustomPaint(
-                  size: Size(constraints.maxWidth, constraints.maxHeight),
-                  painter: _LineChartPainter(widget.data, _hoveredIndex),
-                ),
-                if (_hoveredIndex != null && _tapPosition != null)
-                  _buildTooltip(constraints.maxWidth, constraints.maxHeight),
-              ],
-            ),
-          ),
+        final chartHeight = constraints.maxHeight;
+        final chartWidth = constraints.maxWidth * _zoomLevel;
+
+        return Stack(
+          children: [
+            _isZoomed
+                ? Scrollbar(
+                    controller: _scrollController,
+                    thumbVisibility: true,
+                    trackVisibility: true,
+                    thickness: 12,
+                    radius: const Radius.circular(6),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      controller: _scrollController,
+                      physics: const ClampingScrollPhysics(),
+                      child: SizedBox(
+                        width: chartWidth,
+                        height: chartHeight,
+                        child: _buildChartContent(chartWidth, chartHeight),
+                      ),
+                    ),
+                  )
+                : _buildChartContent(chartWidth, chartHeight),
+            _buildZoomControls(),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildChartContent(double width, double height) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onPanUpdate: _isZoomed
+          ? (details) {
+              if (_scrollController.hasClients) {
+                final newOffset = _scrollController.offset - details.delta.dx;
+                _scrollController.jumpTo(
+                  newOffset.clamp(
+                    0.0,
+                    _scrollController.position.maxScrollExtent,
+                  ),
+                );
+              }
+            }
+          : null,
+      onTapDown: (details) {
+        _handleTap(details.localPosition, width, height);
+      },
+      onTapUp: (_) {
+        setState(() {
+          _hoveredIndex = null;
+          _tapPosition = null;
+        });
+      },
+      child: MouseRegion(
+        onHover: (event) {
+          _handleHover(event.localPosition, width, height);
+        },
+        onExit: (_) {
+          setState(() {
+            _hoveredIndex = null;
+            _tapPosition = null;
+          });
+        },
+        child: Stack(
+          children: [
+            CustomPaint(
+              size: Size(width, height),
+              painter: _LineChartPainter(widget.data, _hoveredIndex),
+            ),
+            if (_hoveredIndex != null && _tapPosition != null)
+              _buildTooltip(width, height),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  Widget _buildZoomControls() {
+    return Positioned(
+      right: 16,
+      top: 16,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: _zoomLevel < _maxZoom ? _zoomIn : null,
+              tooltip: 'Zoom In',
+              iconSize: 20,
+              padding: const EdgeInsets.all(8),
+              constraints: const BoxConstraints(),
+            ),
+            Container(
+              width: 40,
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                '${(_zoomLevel * 100).toInt()}%',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.remove),
+              onPressed: _zoomLevel > _minZoom ? _zoomOut : null,
+              tooltip: 'Zoom Out',
+              iconSize: 20,
+              padding: const EdgeInsets.all(8),
+              constraints: const BoxConstraints(),
+            ),
+            if (_isZoomed)
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: _resetZoom,
+                tooltip: 'Reset Zoom',
+                iconSize: 20,
+                padding: const EdgeInsets.all(8),
+                constraints: const BoxConstraints(),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
