@@ -1,26 +1,21 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'date_converter.dart';
+import 'duration_converter.dart';
 
-class RobotDataPoint extends Equatable {
-  final DateTime date;
-  final int minutesActive;
+part 'robot_data_point.freezed.dart';
+part 'robot_data_point.g.dart';
 
-  const RobotDataPoint({
-    required this.date,
-    required this.minutesActive,
-  });
+@freezed
+class RobotDataPoint with _$RobotDataPoint {
+  const RobotDataPoint._();
+
+  const factory RobotDataPoint({
+    @JsonKey() @DateConverter() required DateTime date,
+    @JsonKey(name: 'duration') @DurationConverter() required int minutesActive,
+  }) = _RobotDataPoint;
+
+  factory RobotDataPoint.fromJson(Map<String, dynamic> json) =>
+      _$RobotDataPointFromJson(json);
 
   double get hoursActive => minutesActive / 60.0;
-
-  @override
-  List<Object?> get props => [date, minutesActive];
-
-  RobotDataPoint copyWith({
-    DateTime? date,
-    int? minutesActive,
-  }) {
-    return RobotDataPoint(
-      date: date ?? this.date,
-      minutesActive: minutesActive ?? this.minutesActive,
-    );
-  }
 }

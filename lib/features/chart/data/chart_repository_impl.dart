@@ -1,19 +1,31 @@
 import 'dart:convert';
+import 'package:chart_example_flutter/features/chart/domain/models/robot_data_point.dart';
+import 'package:chart_example_flutter/features/chart/domain/repository/chart_repository.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../domain/models/robot_data_point.dart';
-import '../domain/repository/chart_repository.dart';
+
+/// Constants for chart repository
+class _ChartRepositoryConstants {
+  // SharedPreferences keys
+  static const String keyChartData = 'chart_data';
+
+  // Asset paths
+  static const String assetSampleDataPath = 'assets/sample_data.json';
+
+  // JSON keys
+  static const String jsonKeyCollector = 'Collector';
+}
 
 class ChartRepositoryImpl implements ChartRepository {
-  static const String _keyChartData = 'chart_data';
   final SharedPreferences sharedPreferences;
 
   ChartRepositoryImpl({required this.sharedPreferences});
 
   @override
   Future<List<RobotDataPoint>> getChartData() async {
-    final dataString = sharedPreferences.getString(_keyChartData);
+    final dataString = sharedPreferences.getString(
+      _ChartRepositoryConstants.keyChartData,
+    );
 
     if (dataString == null) {
       final initialData = await _getInitialData();
@@ -22,12 +34,9 @@ class ChartRepositoryImpl implements ChartRepository {
     }
 
     final List<dynamic> jsonList = json.decode(dataString);
-    return jsonList.map((json) {
-      return RobotDataPoint(
-        date: DateTime.parse(json['date']),
-        minutesActive: json['minutesActive'],
-      );
-    }).toList();
+    return jsonList
+        .map((json) => RobotDataPoint.fromJson(json as Map<String, dynamic>))
+        .toList();
   }
 
   @override
@@ -54,36 +63,28 @@ class ChartRepositoryImpl implements ChartRepository {
   }
 
   Future<void> _saveChartData(List<RobotDataPoint> data) async {
-    final jsonList = data.map((point) {
-      return {
-        'date': point.date.toIso8601String(),
-        'minutesActive': point.minutesActive,
-      };
-    }).toList();
+    final jsonList = data.map((point) => point.toJson()).toList();
 
-    await sharedPreferences.setString(_keyChartData, json.encode(jsonList));
+    await sharedPreferences.setString(
+      _ChartRepositoryConstants.keyChartData,
+      json.encode(jsonList),
+    );
   }
 
   Future<List<RobotDataPoint>> _getInitialData() async {
     try {
       final String jsonString = await rootBundle.loadString(
-        'assets/sample_data.json',
+        _ChartRepositoryConstants.assetSampleDataPath,
       );
       final Map<String, dynamic> jsonData = json.decode(jsonString);
 
       final List<dynamic> collectorData =
-          jsonData['Collector'] as List<dynamic>;
+          jsonData[_ChartRepositoryConstants.jsonKeyCollector] as List<dynamic>;
 
-      final dateFormat = DateFormat('dd/MM/yyyy');
-      return collectorData.map((item) {
-        final String dateString = item['date'] as String;
-        final DateTime date = dateFormat.parse(dateString);
-
-        final String durationString = item['duration'] as String;
-        final int minutes = int.parse(durationString.replaceAll(' min', ''));
-
-        return RobotDataPoint(date: date, minutesActive: minutes);
-      }).toList();
+      // Use fromJson directly - converters handle date and duration parsing
+      return collectorData
+          .map((item) => RobotDataPoint.fromJson(item as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       return [];
     }

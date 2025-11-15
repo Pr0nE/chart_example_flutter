@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:chart_example_flutter/features/auth/ui/auth_cubit.dart';
+import 'package:chart_example_flutter/features/auth/ui/cubit/auth_cubit.dart';
 import 'package:chart_example_flutter/features/auth/data/auth_repository.dart';
-import 'package:chart_example_flutter/features/chart/ui/chart_cubit.dart';
+import 'package:chart_example_flutter/features/chart/ui/cubit/chart_cubit.dart';
 import 'package:chart_example_flutter/features/chart/data/chart_repository_impl.dart';
 import 'package:chart_example_flutter/features/chart/ui/chart_page.dart';
 

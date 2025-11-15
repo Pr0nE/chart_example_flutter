@@ -1,6 +1,6 @@
+import 'package:chart_example_flutter/features/auth/domain/models/user.dart';
+import 'package:chart_example_flutter/features/auth/domain/repository/auth_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../domain/models/user.dart';
-import '../domain/repository/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   static const String _keyIsLoggedIn = 'is_logged_in';
@@ -14,7 +14,8 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<User?> login(String username, String password) async {
-    if (username.toLowerCase() == _validUsername.toLowerCase() && password == _validPassword) {
+    if (username.toLowerCase() == _validUsername.toLowerCase() &&
+        password == _validPassword) {
       await sharedPreferences.setBool(_keyIsLoggedIn, true);
       await sharedPreferences.setString(_keyUsername, username);
       return User(username: username);

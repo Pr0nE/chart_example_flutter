@@ -1,9 +1,9 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:chart_example_flutter/features/auth/ui/auth_cubit.dart';
+import 'package:chart_example_flutter/features/auth/ui/cubit/auth_cubit.dart';
 import 'package:chart_example_flutter/features/auth/data/auth_repository.dart';
-import 'package:chart_example_flutter/features/auth/domain/auth_state.dart';
+import 'package:chart_example_flutter/features/auth/ui/cubit/auth_state.dart';
 import 'package:chart_example_flutter/features/auth/domain/models/user.dart';
 import 'package:chart_example_flutter/features/auth/domain/repository/auth_repository.dart';
 
@@ -23,33 +23,58 @@ void main() {
   });
 
   group('AuthCubit', () {
-    test('initial state is AuthInitial', () {
-      expect(authCubit.state, const AuthInitial());
+    test('initial state is correct', () {
+      expect(authCubit.state.isInitial, true);
+      expect(authCubit.state.isLoading, false);
+      expect(authCubit.state.errorMessage, null);
+      expect(authCubit.state.user, null);
     });
 
     blocTest<AuthCubit, AuthState>(
-      'emits [AuthLoading, AuthAuthenticated] when login succeeds',
+      'emits loading then authenticated states when login succeeds',
       build: () => authCubit,
       act: (cubit) => cubit.login('Lely', 'LelyControl2'),
-      expect: () => [const AuthLoading(), isA<AuthAuthenticated>()],
-    );
-
-    blocTest<AuthCubit, AuthState>(
-      'emits [AuthLoading, AuthError] when login fails',
-      build: () => authCubit,
-      act: (cubit) => cubit.login('Wrong', 'Credentials'),
       expect: () => [
-        const AuthLoading(),
-        const AuthError('Invalid username or password'),
+        isA<AuthState>()
+            .having((s) => s.isLoading, 'isLoading', true)
+            .having((s) => s.errorMessage, 'errorMessage', null),
+        isA<AuthState>()
+            .having((s) => s.isLoading, 'isLoading', false)
+            .having((s) => s.isAuthenticated, 'isAuthenticated', true)
+            .having((s) => s.errorMessage, 'errorMessage', null),
       ],
     );
 
     blocTest<AuthCubit, AuthState>(
-      'emits [AuthUnauthenticated] when logout is called',
+      'emits loading then error states when login fails',
       build: () => authCubit,
-      seed: () => const AuthAuthenticated(User(username: 'Lely')),
-      act: (cubit) => cubit.logout(),
-      expect: () => [const AuthUnauthenticated()],
+      act: (cubit) => cubit.login('Wrong', 'Credentials'),
+      expect: () => [
+        isA<AuthState>()
+            .having((s) => s.isLoading, 'isLoading', true)
+            .having((s) => s.errorMessage, 'errorMessage', null),
+        isA<AuthState>()
+            .having((s) => s.isLoading, 'isLoading', false)
+            .having((s) => s.errorMessage, 'errorMessage', 'Invalid username or password'),
+      ],
     );
+
+    blocTest<AuthCubit, AuthState>(
+      'emits unauthenticated state when logout is called',
+      build: () => authCubit,
+      seed: () => const AuthState(user: User(username: 'Lely')),
+      act: (cubit) => cubit.logout(),
+      expect: () => [
+        isA<AuthState>()
+            .having((s) => s.user, 'user', null)
+            .having((s) => s.isAuthenticated, 'isAuthenticated', false),
+      ],
+    );
+
+    test('clearError removes error message', () {
+      authCubit.emit(const AuthState(errorMessage: 'Some error'));
+      authCubit.clearError();
+      expect(authCubit.state.errorMessage, null);
+    });
   });
 }

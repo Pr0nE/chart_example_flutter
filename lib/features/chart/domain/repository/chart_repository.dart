@@ -1,4 +1,4 @@
-import '../models/robot_data_point.dart';
+import 'package:chart_example_flutter/features/chart/domain/models/robot_data_point.dart';
 
 abstract class ChartRepository {
   Future<List<RobotDataPoint>> getChartData();

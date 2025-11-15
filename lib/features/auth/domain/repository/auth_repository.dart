@@ -1,4 +1,4 @@
-import '../models/user.dart';
+import 'package:chart_example_flutter/features/auth/domain/models/user.dart';
 
 abstract class AuthRepository {
   Future<User?> login(String username, String password);

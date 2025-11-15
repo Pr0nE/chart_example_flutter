@@ -1,8 +1,8 @@
+import 'package:chart_example_flutter/features/auth/ui/cubit/auth_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../auth/ui/auth_cubit.dart';
-import '../domain/chart_state.dart';
-import 'chart_cubit.dart';
+import 'cubit/chart_state.dart';
+import 'cubit/chart_cubit.dart';
 import 'widgets/add_data_bottom_sheet.dart';
 import 'widgets/custom_line_chart.dart';
 
@@ -48,14 +48,15 @@ class _ChartPageState extends State<ChartPage> {
   Widget build(BuildContext context) {
     return BlocListener<ChartCubit, ChartState>(
       listener: (context, state) {
-        if (state is ChartError) {
+        if (state.hasError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.message),
+              content: Text(state.errorMessage!),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 3),
             ),
           );
+          context.read<ChartCubit>().clearError();
         }
       },
       child: Scaffold(
@@ -72,40 +73,41 @@ class _ChartPageState extends State<ChartPage> {
         ),
         body: BlocBuilder<ChartCubit, ChartState>(
           builder: (context, state) {
-            if (state is ChartLoading) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Loading chart data...'),
-                ],
-              ),
-            );
-          }
+            if (state.isLoading && !state.hasData) {
+              return const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Loading chart data...'),
+                  ],
+                ),
+              );
+            }
 
-          if (state is ChartLoaded) {
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: Card(
-                      elevation: 4,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: CustomLineChart(data: state.data),
+            if (state.hasData) {
+              return Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (state.isLoading) const LinearProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: Card(
+                        elevation: 4,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: CustomLineChart(data: state.data),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 100),
-                ],
-              ),
-            );
-          }
+                    const SizedBox(height: 100),
+                  ],
+                ),
+              );
+            }
 
             return const Center(child: Text('No data available'));
           },

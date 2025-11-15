@@ -1,6 +1,6 @@
+import 'package:chart_example_flutter/features/chart/domain/models/robot_data_point.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' as intl;
-import '../../domain/models/robot_data_point.dart';
 import 'dart:math' as math;
 
 class CustomLineChart extends StatefulWidget {
@@ -26,7 +26,11 @@ class _CustomLineChartState extends State<CustomLineChart> {
       builder: (context, constraints) {
         return GestureDetector(
           onTapDown: (details) {
-            _handleTap(details.localPosition, constraints.maxWidth, constraints.maxHeight);
+            _handleTap(
+              details.localPosition,
+              constraints.maxWidth,
+              constraints.maxHeight,
+            );
           },
           onTapUp: (_) {
             setState(() {
@@ -36,7 +40,11 @@ class _CustomLineChartState extends State<CustomLineChart> {
           },
           child: MouseRegion(
             onHover: (event) {
-              _handleHover(event.localPosition, constraints.maxWidth, constraints.maxHeight);
+              _handleHover(
+                event.localPosition,
+                constraints.maxWidth,
+                constraints.maxHeight,
+              );
             },
             onExit: (_) {
               setState(() {
@@ -158,17 +166,11 @@ class _CustomLineChartState extends State<CustomLineChart> {
             const SizedBox(height: 4),
             Text(
               'Hours: ${point.hoursActive.toStringAsFixed(1)}',
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 11,
-              ),
+              style: const TextStyle(color: Colors.white70, fontSize: 11),
             ),
             Text(
               'Minutes: ${point.minutesActive}',
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 11,
-              ),
+              style: const TextStyle(color: Colors.white70, fontSize: 11),
             ),
           ],
         ),
@@ -310,7 +312,8 @@ class _LineChartPainter extends CustomPainter {
     final dateFormat = intl.DateFormat('MM/dd');
 
     // Calculate label width and determine skip interval
-    const double estimatedLabelWidth = 50.0; // Estimated width for rotated labels
+    const double estimatedLabelWidth =
+        50.0; // Estimated width for rotated labels
     final double availableWidth = chartWidth / sortedData.length;
 
     // Calculate how many labels we can show without overlap
@@ -322,9 +325,8 @@ class _LineChartPainter extends CustomPainter {
     // Always show first and last labels, and skip intermediate ones if needed
     for (int i = 0; i < sortedData.length; i++) {
       // Show label if it's the first, last, or falls on the skip interval
-      final bool shouldShowLabel = i == 0 ||
-                                   i == sortedData.length - 1 ||
-                                   i % skipInterval == 0;
+      final bool shouldShowLabel =
+          i == 0 || i == sortedData.length - 1 || i % skipInterval == 0;
 
       if (!shouldShowLabel) continue;
 
@@ -437,21 +439,13 @@ class _LineChartPainter extends CustomPainter {
       final outerPaint = Paint()
         ..color = Colors.white
         ..style = PaintingStyle.fill;
-      canvas.drawCircle(
-        Offset(x, y),
-        isHovered ? 8 : 6,
-        outerPaint,
-      );
+      canvas.drawCircle(Offset(x, y), isHovered ? 8 : 6, outerPaint);
 
       // Draw inner circle (blue fill)
       final innerPaint = Paint()
         ..color = isHovered ? Colors.blueAccent : Colors.blue
         ..style = PaintingStyle.fill;
-      canvas.drawCircle(
-        Offset(x, y),
-        isHovered ? 6 : 4,
-        innerPaint,
-      );
+      canvas.drawCircle(Offset(x, y), isHovered ? 6 : 4, innerPaint);
 
       // Draw highlight ring for hovered point
       if (isHovered) {

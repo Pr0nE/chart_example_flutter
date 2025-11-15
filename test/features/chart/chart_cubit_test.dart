@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:chart_example_flutter/features/chart/ui/chart_cubit.dart';
+import 'package:chart_example_flutter/features/chart/ui/cubit/chart_cubit.dart';
 import 'package:chart_example_flutter/features/chart/data/chart_repository_impl.dart';
-import 'package:chart_example_flutter/features/chart/domain/chart_state.dart';
+import 'package:chart_example_flutter/features/chart/ui/cubit/chart_state.dart';
 
 void main() {
   late ChartCubit chartCubit;
@@ -37,22 +37,30 @@ void main() {
   });
 
   group('ChartCubit', () {
-    test('initial state is ChartInitial', () {
-      expect(chartCubit.state, const ChartInitial());
+    test('initial state is correct', () {
+      expect(chartCubit.state.isInitial, true);
+      expect(chartCubit.state.isLoading, false);
+      expect(chartCubit.state.errorMessage, null);
+      expect(chartCubit.state.data, []);
     });
 
     blocTest<ChartCubit, ChartState>(
-      'emits [ChartLoading, ChartLoaded] when loadChartData succeeds',
+      'emits loading then loaded states when loadChartData succeeds',
       build: () => chartCubit,
       act: (cubit) => cubit.loadChartData(),
       expect: () => [
-        const ChartLoading(),
-        isA<ChartLoaded>(),
+        isA<ChartState>()
+            .having((s) => s.isLoading, 'isLoading', true)
+            .having((s) => s.errorMessage, 'errorMessage', null),
+        isA<ChartState>()
+            .having((s) => s.isLoading, 'isLoading', false)
+            .having((s) => s.hasData, 'hasData', true)
+            .having((s) => s.errorMessage, 'errorMessage', null),
       ],
     );
 
     blocTest<ChartCubit, ChartState>(
-      'emits [ChartLoading, ChartLoaded] when adding new data point',
+      'emits loading then loaded states when adding new data point',
       build: () => chartCubit,
       act: (cubit) async {
         await cubit.loadChartData();
@@ -60,13 +68,16 @@ void main() {
       },
       skip: 2,
       expect: () => [
-        const ChartLoading(),
-        isA<ChartLoaded>(),
+        isA<ChartState>()
+            .having((s) => s.isLoading, 'isLoading', true),
+        isA<ChartState>()
+            .having((s) => s.isLoading, 'isLoading', false)
+            .having((s) => s.hasData, 'hasData', true),
       ],
     );
 
     blocTest<ChartCubit, ChartState>(
-      'emits [ChartError] when adding duplicate date',
+      'emits error while keeping data when adding duplicate date',
       build: () => chartCubit,
       act: (cubit) async {
         await cubit.loadChartData();
@@ -74,9 +85,21 @@ void main() {
       },
       skip: 2,
       expect: () => [
-        const ChartError('Date already exists'),
-        isA<ChartLoaded>(),
+        isA<ChartState>()
+            .having((s) => s.errorMessage, 'errorMessage', 'Date already exists')
+            .having((s) => s.hasData, 'hasData', true),
       ],
     );
+
+    test('clearError removes error message while keeping data', () async {
+      await chartCubit.loadChartData();
+      chartCubit.emit(chartCubit.state.copyWith(errorMessage: 'Some error'));
+      final dataBefore = chartCubit.state.data;
+
+      chartCubit.clearError();
+
+      expect(chartCubit.state.errorMessage, null);
+      expect(chartCubit.state.data, dataBefore);
+    });
   });
 }

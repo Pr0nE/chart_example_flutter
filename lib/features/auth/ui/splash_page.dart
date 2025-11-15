@@ -1,5 +1,5 @@
-import 'package:chart_example_flutter/features/auth/domain/auth_state.dart';
-import 'package:chart_example_flutter/features/auth/ui/auth_cubit.dart';
+import 'package:chart_example_flutter/features/auth/ui/cubit/auth_state.dart';
+import 'package:chart_example_flutter/features/auth/ui/cubit/auth_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -24,10 +24,12 @@ class _SplashPageState extends State<SplashPage> {
   Widget build(BuildContext context) {
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
-        if (state is AuthAuthenticated) {
-          Navigator.of(context).pushReplacementNamed('/home');
-        } else if (state is AuthUnauthenticated) {
-          Navigator.of(context).pushReplacementNamed('/login');
+        if (!state.isLoading) {
+          if (state.isAuthenticated) {
+            Navigator.of(context).pushReplacementNamed('/home');
+          } else {
+            Navigator.of(context).pushReplacementNamed('/login');
+          }
         }
       },
       child: const Scaffold(

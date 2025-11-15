@@ -1,6 +1,6 @@
-import 'package:chart_example_flutter/features/auth/domain/auth_state.dart';
+import 'package:chart_example_flutter/features/auth/ui/cubit/auth_state.dart';
 import 'package:chart_example_flutter/features/auth/domain/validators.dart';
-import 'package:chart_example_flutter/features/auth/ui/auth_cubit.dart';
+import 'package:chart_example_flutter/features/auth/ui/cubit/auth_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -37,17 +37,22 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
-        if (state is AuthAuthenticated) {
+        if (state.isAuthenticated) {
           Navigator.of(context).pushReplacementNamed('/home');
-        } else if (state is AuthError) {
+        } else if (state.hasError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(state.errorMessage!),
+              backgroundColor: Colors.red,
+            ),
           );
+          // Clear error after showing it
+          context.read<AuthCubit>().clearError();
         }
       },
       child: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {
-          final isLoading = state is AuthLoading;
+          final isLoading = state.isLoading;
 
           return Scaffold(
             body: Center(
