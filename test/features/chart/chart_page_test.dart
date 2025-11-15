@@ -3,17 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:chart_example_flutter/features/auth/data/auth_cubit.dart';
+import 'package:chart_example_flutter/features/auth/ui/auth_cubit.dart';
 import 'package:chart_example_flutter/features/auth/data/auth_repository.dart';
-import 'package:chart_example_flutter/features/auth/domain/auth_io.dart';
-import 'package:chart_example_flutter/features/chart/data/chart_cubit.dart';
+import 'package:chart_example_flutter/features/chart/ui/chart_cubit.dart';
 import 'package:chart_example_flutter/features/chart/data/chart_repository_impl.dart';
-import 'package:chart_example_flutter/features/chart/domain/chart_io.dart';
 import 'package:chart_example_flutter/features/chart/ui/chart_page.dart';
 
 void main() {
-  late ChartIO chartIO;
-  late AuthIO authIO;
+  late ChartCubit chartCubit;
+  late AuthCubit authCubit;
 
   // Helper to create initial test data
   List<Map<String, dynamic>> getInitialTestData() {
@@ -37,29 +35,25 @@ void main() {
     final chartRepository = ChartRepositoryImpl(
       sharedPreferences: sharedPreferences,
     );
-    chartIO = ChartCubit(chartRepository);
+    chartCubit = ChartCubit(chartRepository);
 
     final authRepository = AuthRepositoryImpl(
       sharedPreferences: sharedPreferences,
     );
-    authIO = AuthCubit(authRepository);
+    authCubit = AuthCubit(authRepository);
   });
 
   tearDown(() {
-    if (chartIO is ChartCubit) {
-      (chartIO as ChartCubit).close();
-    }
-    if (authIO is AuthCubit) {
-      (authIO as AuthCubit).close();
-    }
+    chartCubit.close();
+    authCubit.close();
   });
 
   Widget createWidgetUnderTest() {
     return MaterialApp(
-      home: MultiRepositoryProvider(
+      home: MultiBlocProvider(
         providers: [
-          RepositoryProvider<ChartIO>.value(value: chartIO),
-          RepositoryProvider<AuthIO>.value(value: authIO),
+          BlocProvider<ChartCubit>.value(value: chartCubit),
+          BlocProvider<AuthCubit>.value(value: authCubit),
         ],
         child: const ChartPage(),
       ),

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:chart_example_flutter/features/chart/data/chart_cubit.dart';
+import 'package:chart_example_flutter/features/chart/ui/chart_cubit.dart';
 import 'package:chart_example_flutter/features/chart/data/chart_repository_impl.dart';
 import 'package:chart_example_flutter/features/chart/domain/chart_state.dart';
 

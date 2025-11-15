@@ -1,7 +1,6 @@
-import 'dart:async';
-import 'package:chart_example_flutter/features/auth/domain/auth_io.dart';
 import 'package:chart_example_flutter/features/auth/domain/auth_state.dart';
 import 'package:chart_example_flutter/features/auth/domain/validators/username_validator.dart';
+import 'package:chart_example_flutter/features/auth/ui/auth_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -18,27 +17,9 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   String? _usernameError;
-  StreamSubscription<AuthState>? _authSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-    _authSubscription = context.read<AuthIO>().authStateStream.listen((state) {
-      if (!mounted) return;
-
-      if (state is AuthAuthenticated) {
-        Navigator.of(context).pushReplacementNamed('/home');
-      } else if (state is AuthError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-        );
-      }
-    });
-  }
 
   @override
   void dispose() {
-    _authSubscription?.cancel();
     _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -56,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
 
   void _handleLogin() {
     if (_formKey.currentState!.validate() && _usernameError == null) {
-      context.read<AuthIO>().login(
+      context.read<AuthCubit>().login(
         _usernameController.text,
         _passwordController.text,
       );
@@ -65,17 +46,22 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final authIO = context.read<AuthIO>();
-
-    return Scaffold(
-      body: StreamBuilder<AuthState>(
-        stream: authIO.authStateStream,
-        initialData: authIO.currentState,
-        builder: (context, snapshot) {
-          final state = snapshot.data ?? authIO.currentState;
+    return BlocListener<AuthCubit, AuthState>(
+      listener: (context, state) {
+        if (state is AuthAuthenticated) {
+          Navigator.of(context).pushReplacementNamed('/home');
+        } else if (state is AuthError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+          );
+        }
+      },
+      child: BlocBuilder<AuthCubit, AuthState>(
+        builder: (context, state) {
           final isLoading = state is AuthLoading;
 
-          return Center(
+          return Scaffold(
+            body: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Form(
@@ -171,8 +157,9 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ),
-          );
-        },
+          ),
+        );
+      },
       ),
     );
   }

@@ -1,6 +1,6 @@
 # Robot Analytics Chart App
 
-A Flutter application demonstrating **Pure Clean Architecture** with authentication and chart visualization. The UI depends only on domain abstractions using native Dart Streams instead of BLoC widgets.
+A Flutter application demonstrating **Clean Architecture with BLoC** for authentication and chart visualization. Uses BlocListener and BlocBuilder for reactive state management.
 
 ## Features
 
@@ -18,60 +18,65 @@ A Flutter application demonstrating **Pure Clean Architecture** with authenticat
 ┌─────────────────────────────────────────────────────────────┐
 │                         UI Layer                             │
 │  SplashPage │ LoginPage │ ChartPage                          │
+│  AuthCubit  │ ChartCubit                                     │
 │       │           │           │                              │
-│       └───StreamBuilder/StreamListener───┐                   │
-│                                          ▼                   │
-│                                   Domain IO Interfaces       │
-│                                   (AuthIO, ChartIO)          │
+│       └───BlocBuilder/BlocListener───┐                       │
+│                                      ▼                       │
+│                               Domain States                  │
+│                          (AuthState, ChartState)             │
 └─────────────────────────────────────────────────────────────┘
                             │ depends on
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                      Domain Layer                            │
-│  AuthIO/ChartIO Interfaces │ Validators │ Models & States    │
-│  AuthRepo/ChartRepo Interfaces                               │
+│  Validators │ Models & States │ Repository Interfaces        │
+│  AuthRepository │ ChartRepository                            │
 │  No dependencies - Pure Dart code                            │
 └─────────────────────────────────────────────────────────────┘
                             ▲ implements
 ┌─────────────────────────────────────────────────────────────┐
 │                      Data Layer                              │
-│  AuthRepoImpl │ ChartRepoImpl │ AuthCubit │ ChartCubit       │
-│                                     │                        │
-│                              SharedPreferences               │
+│  AuthRepositoryImpl │ ChartRepositoryImpl                    │
+│                              │                               │
+│                       SharedPreferences                      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### Key Principles
 
-1. **UI Depends Only on Domain** - NO BlocConsumer/BlocBuilder, uses `StreamBuilder` instead
-2. **Interface-Based DI** - `RepositoryProvider` provides interfaces, not implementations
+1. **Standard BLoC Pattern** - Uses BlocProvider, BlocListener, and BlocBuilder for reactive UI
+2. **Cubits in UI Layer** - State management logic lives close to the presentation layer
 3. **Domain Validators** - Business rules live in domain layer
-4. **Stream-Based State** - Native Dart `Stream<State>` pattern
+4. **Repository Pattern** - Data layer abstractions for testability and flexibility
 
-### Why Cubits Are in Data Layer (Not UI)
+### BLoC Pattern Implementation
 
-**Architectural Debate:** While Cubits only depend on domain interfaces (making UI layer placement valid), this project places them in the data layer for these reasons:
+This project follows the standard flutter_bloc pattern:
 
-1. **UI Remains Untouchable** - Switch from Cubit to Riverpod/GetX/Redux without changing UI code
-2. **Easier Testing** - Test Cubits independently from Flutter widgets
-3. **Reusable Across UIs** - Same Cubits can power Flutter UI, CLI apps, or web dashboards
-4. **Not UI-Specific** - Cubits orchestrate data operations and business logic, not UI rendering
-
-**Philosophy:** Cubits are implementation details of business logic (the "how"), not presentation layer (the "what to show"). They belong with repositories as data orchestrators, keeping UI purely about widgets and user interactions.
-
-### Standard BLoC ❌ vs Our Approach ✅
-
+**BlocListener** - For side effects (navigation, snackbars)
 ```dart
-// Standard BLoC - UI depends on data layer
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../data/auth_cubit.dart'; // DATA LAYER IMPORT!
-BlocConsumer<AuthCubit, AuthState>(...)
+BlocListener<AuthCubit, AuthState>(
+  listener: (context, state) {
+    if (state is AuthAuthenticated) {
+      Navigator.pushReplacementNamed('/home');
+    } else if (state is AuthError) {
+      ScaffoldMessenger.showSnackBar(...);
+    }
+  },
+  child: ...,
+)
+```
 
-// Our Approach - UI depends only on domain
-import '../domain/auth_io.dart'; // DOMAIN LAYER ONLY!
-StreamBuilder<AuthState>(
-  stream: context.read<AuthIO>().authStateStream,
-  builder: ...,
+**BlocBuilder** - For reactive UI updates
+```dart
+BlocBuilder<AuthCubit, AuthState>(
+  builder: (context, state) {
+    final isLoading = state is AuthLoading;
+    return ElevatedButton(
+      onPressed: isLoading ? null : _handleLogin,
+      child: isLoading ? CircularProgressIndicator() : Text('Login'),
+    );
+  },
 )
 ```
 
@@ -79,29 +84,29 @@ StreamBuilder<AuthState>(
 
 ```
 lib/
-├── app/app.dart                    # DI & app configuration
+├── app/app.dart                    # BlocProvider setup & app configuration
 ├── features/
 │   ├── auth/
 │   │   ├── domain/
-│   │   │   ├── models/             # User, AuthState
+│   │   │   ├── models/             # User
 │   │   │   ├── validators/         # UsernameValidator
-│   │   │   ├── auth_io.dart        # Business logic interface
-│   │   │   └── auth_repository.dart # Data access interface
+│   │   │   ├── auth_state.dart     # AuthState classes
+│   │   │   └── repository/         # AuthRepository interface
 │   │   ├── data/
-│   │   │   ├── auth_repository_impl.dart
-│   │   │   └── auth_cubit.dart     # Implements AuthIO
+│   │   │   └── auth_repository.dart # Repository implementation
 │   │   └── ui/
+│   │       ├── auth_cubit.dart     # State management
 │   │       ├── splash_page.dart
 │   │       └── login_page.dart
 │   └── chart/
 │       ├── domain/
-│       │   ├── models/             # RobotDataPoint, ChartState
-│       │   ├── chart_io.dart       # Business logic interface
-│       │   └── chart_repository.dart # Data access interface
+│       │   ├── models/             # RobotDataPoint
+│       │   ├── chart_state.dart    # ChartState classes
+│       │   └── repository/         # ChartRepository interface
 │       ├── data/
-│       │   ├── chart_repository_impl.dart
-│       │   └── chart_cubit.dart    # Implements ChartIO
+│       │   └── chart_repository_impl.dart # Repository implementation
 │       └── ui/
+│           ├── chart_cubit.dart    # State management
 │           ├── chart_page.dart
 │           └── widgets/
 └── main.dart
@@ -109,11 +114,11 @@ lib/
 
 ## Benefits
 
-1. **Zero UI-Data Coupling** - UI depends only on domain abstractions
-2. **Framework Independence** - Can swap BLoC/Cubit for any solution
-3. **Testability** - Each layer tests independently
-4. **Maintainability** - Changes isolated to single layer
-5. **Flexibility** - Swap implementations without touching UI
+1. **Standard BLoC Pattern** - Follows flutter_bloc best practices
+2. **Automatic Subscription Management** - BlocBuilder/BlocListener handle stream cleanup
+3. **Testability** - Cubits and repositories test independently
+4. **Maintainability** - Clear separation between state management and UI
+5. **Reactive UI** - Declarative state-driven rendering
 
 ## Testing
 
@@ -127,4 +132,4 @@ flutter test test/features/chart/    # Chart tests only
 - Repository tests with mocked SharedPreferences
 - Validator tests (pure domain logic)
 - Cubit tests with bloc_test
-- Widget tests with StreamBuilder rendering
+- Widget tests with BlocBuilder/BlocListener rendering

@@ -1,6 +1,5 @@
-import 'dart:async';
-import 'package:chart_example_flutter/features/auth/domain/auth_io.dart';
 import 'package:chart_example_flutter/features/auth/domain/auth_state.dart';
+import 'package:chart_example_flutter/features/auth/ui/auth_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -12,38 +11,26 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
-  StreamSubscription<AuthState>? _authSubscription;
-
   @override
   void initState() {
     super.initState();
 
-    final authIO = context.read<AuthIO>();
-
-    _authSubscription = authIO.authStateStream.listen((state) {
-      if (!mounted) return;
-
-      if (state is AuthAuthenticated) {
-        Navigator.of(context).pushReplacementNamed('/home');
-      } else if (state is AuthUnauthenticated) {
-        Navigator.of(context).pushReplacementNamed('/login');
-      }
-    });
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      authIO.checkAuthStatus();
+      context.read<AuthCubit>().checkAuthStatus();
     });
-  }
-
-  @override
-  void dispose() {
-    _authSubscription?.cancel();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return BlocListener<AuthCubit, AuthState>(
+      listener: (context, state) {
+        if (state is AuthAuthenticated) {
+          Navigator.of(context).pushReplacementNamed('/home');
+        } else if (state is AuthUnauthenticated) {
+          Navigator.of(context).pushReplacementNamed('/login');
+        }
+      },
+      child: const Scaffold(
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -59,6 +46,7 @@ class _SplashPageState extends State<SplashPage> {
             ],
           ),
         ),
+      ),
     );
   }
 }
