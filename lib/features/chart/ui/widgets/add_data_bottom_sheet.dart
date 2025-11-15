@@ -22,10 +22,19 @@ class _AddDataBottomSheetState extends State<AddDataBottomSheet> {
     super.dispose();
   }
 
-  void _handleDateNavigation(int days) {
-    setState(() {
-      _selectedDate = _selectedDate.add(Duration(days: days));
-    });
+  Future<void> _showDatePicker() async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate != null) {
+      setState(() {
+        _selectedDate = pickedDate;
+      });
+    }
   }
 
   void _handleSubmit() {
@@ -68,31 +77,34 @@ class _AddDataBottomSheetState extends State<AddDataBottomSheet> {
               ),
             ),
             const SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left),
-                    onPressed: () => _handleDateNavigation(-1),
-                  ),
-                  Text(
-                    DateFormat('MM/dd/yyyy').format(_selectedDate),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
+            InkWell(
+              onTap: _showDatePicker,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today, color: Colors.blue),
+                        const SizedBox(width: 12),
+                        Text(
+                          DateFormat('MM/dd/yyyy').format(_selectedDate),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right),
-                    onPressed: () => _handleDateNavigation(1),
-                  ),
-                ],
+                    const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 24),
