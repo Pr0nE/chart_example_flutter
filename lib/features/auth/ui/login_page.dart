@@ -1,5 +1,5 @@
 import 'package:chart_example_flutter/features/auth/domain/auth_state.dart';
-import 'package:chart_example_flutter/features/auth/domain/validators/username_validator.dart';
+import 'package:chart_example_flutter/features/auth/domain/validators.dart';
 import 'package:chart_example_flutter/features/auth/ui/auth_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,7 +16,6 @@ class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  String? _usernameError;
 
   @override
   void dispose() {
@@ -25,18 +24,8 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _validateUsername(String value) {
-    setState(() {
-      if (value.isEmpty) {
-        _usernameError = null;
-      } else {
-        _usernameError = UsernameValidator.getErrorMessage(value);
-      }
-    });
-  }
-
   void _handleLogin() {
-    if (_formKey.currentState!.validate() && _usernameError == null) {
+    if (_formKey.currentState!.validate()) {
       context.read<AuthCubit>().login(
         _usernameController.text,
         _passwordController.text,
@@ -92,18 +81,11 @@ class _LoginPageState extends State<LoginPage> {
                       decoration: InputDecoration(
                         labelText: 'Username',
                         prefixIcon: const Icon(Icons.person),
-                        errorText: _usernameError,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      onChanged: _validateUsername,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter username';
-                        }
-                        return null;
-                      },
+                      validator: Validators.usernameValidator,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -129,12 +111,7 @@ class _LoginPageState extends State<LoginPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter password';
-                        }
-                        return null;
-                      },
+                      validator: Validators.passwordValidator,
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton(

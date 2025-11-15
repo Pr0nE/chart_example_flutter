@@ -69,6 +69,7 @@ void main() {
 
       final usernameField = find.byType(TextFormField).first;
       await tester.enterText(usernameField, 'User&Name');
+      await tester.tap(find.text('Login'));
       await tester.pumpAndSettle();
 
       expect(find.textContaining('invalid characters'), findsOneWidget);

@@ -31,10 +31,7 @@ void main() {
       'emits [AuthLoading, AuthAuthenticated] when login succeeds',
       build: () => authCubit,
       act: (cubit) => cubit.login('Lely', 'LelyControl2'),
-      expect: () => [
-        const AuthLoading(),
-        isA<AuthAuthenticated>(),
-      ],
+      expect: () => [const AuthLoading(), isA<AuthAuthenticated>()],
     );
 
     blocTest<AuthCubit, AuthState>(
@@ -48,25 +45,11 @@ void main() {
     );
 
     blocTest<AuthCubit, AuthState>(
-      'emits [AuthLoading, AuthError] when username has invalid characters',
-      build: () => authCubit,
-      act: (cubit) => cubit.login('User&Name', 'Password'),
-      expect: () => [
-        const AuthLoading(),
-        const AuthError('Username contains invalid characters'),
-      ],
-    );
-
-    blocTest<AuthCubit, AuthState>(
       'emits [AuthUnauthenticated] when logout is called',
       build: () => authCubit,
-      seed: () => const AuthAuthenticated(
-        User(username: 'Lely'),
-      ),
+      seed: () => const AuthAuthenticated(User(username: 'Lely')),
       act: (cubit) => cubit.logout(),
-      expect: () => [
-        const AuthUnauthenticated(),
-      ],
+      expect: () => [const AuthUnauthenticated()],
     );
   });
 }
