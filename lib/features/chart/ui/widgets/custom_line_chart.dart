@@ -21,7 +21,6 @@ class _CustomLineChartState extends State<CustomLineChart> {
   double _zoomLevel = 1.0;
   final ScrollController _scrollController = ScrollController();
 
-  // Cache for chart points - only recalculate when size or data changes
   List<ChartPoint> _cachedChartPoints = [];
   double? _cachedWidth;
   double? _cachedHeight;
@@ -33,7 +32,6 @@ class _CustomLineChartState extends State<CustomLineChart> {
   @override
   void didUpdateWidget(CustomLineChart oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Invalidate cache if data changed
     if (oldWidget.data != widget.data) {
       _cachedChartPoints = [];
       _cachedWidth = null;
@@ -47,7 +45,6 @@ class _CustomLineChartState extends State<CustomLineChart> {
     super.dispose();
   }
 
-  /// Get cached chart points, recalculate only if size or data changed
   List<ChartPoint> _getChartPoints(double width, double height) {
     if (_cachedWidth != width ||
         _cachedHeight != height ||
@@ -258,7 +255,6 @@ class _CustomLineChartState extends State<CustomLineChart> {
     }
   }
 
-  /// Calculate all chart point positions - cached for performance
   List<ChartPoint> _calculateChartPoints(double width, double height) {
     const paddingLeft = 60.0;
     const paddingRight = 20.0;
@@ -282,12 +278,7 @@ class _CustomLineChartState extends State<CustomLineChart> {
       final x = paddingLeft + (chartWidth * i / (sortedData.length - 1));
       final normalizedValue = sortedData[i].hoursActive / yMax;
       final y = paddingTop + chartHeight - (chartHeight * normalizedValue);
-      return ChartPoint(
-        index: i,
-        x: x,
-        y: y,
-        data: sortedData[i],
-      );
+      return ChartPoint(index: i, x: x, y: y, data: sortedData[i]);
     });
   }
 
