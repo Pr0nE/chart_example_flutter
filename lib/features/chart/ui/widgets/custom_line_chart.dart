@@ -145,7 +145,6 @@ class _CustomLineChartState extends State<CustomLineChart> {
     );
   }
 
-
   Widget _buildZoomControls() {
     return Positioned(
       right: 16,
@@ -179,7 +178,10 @@ class _CustomLineChartState extends State<CustomLineChart> {
               child: Text(
                 '${(_zoomLevel * 100).toInt()}%',
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             IconButton(
@@ -272,8 +274,16 @@ class _CustomLineChartState extends State<CustomLineChart> {
     final point = sortedData[_hoveredIndex!];
     final dateFormat = intl.DateFormat('MMM dd, yyyy');
 
+    const double tooltipWidth = 150.0;
+
+    final bool wouldOverflowRight = _tapPosition!.dx + tooltipWidth > width;
+
+    final double leftPosition = wouldOverflowRight
+        ? _tapPosition!.dx - tooltipWidth
+        : _tapPosition!.dx;
+
     return Positioned(
-      left: _tapPosition!.dx + 10,
+      left: leftPosition,
       top: _tapPosition!.dy - 60,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
