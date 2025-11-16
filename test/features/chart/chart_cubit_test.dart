@@ -16,7 +16,7 @@ void main() {
       final date = DateTime(2025, 10, 8 + index);
       return {
         'date': date.toIso8601String(),
-        'minutesActive': 100 + (index * 50),
+        'duration': 100 + (index * 50),
       };
     });
   }

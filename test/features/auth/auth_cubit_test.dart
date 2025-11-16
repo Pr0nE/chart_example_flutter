@@ -24,10 +24,7 @@ void main() {
 
   group('AuthCubit', () {
     test('initial state is correct', () {
-      expect(authCubit.state.isInitial, true);
-      expect(authCubit.state.isLoading, false);
-      expect(authCubit.state.errorMessage, null);
-      expect(authCubit.state.user, null);
+      expect(authCubit.state, isA<AuthInitial>());
     });
 
     blocTest<AuthCubit, AuthState>(
@@ -35,13 +32,9 @@ void main() {
       build: () => authCubit,
       act: (cubit) => cubit.login('Lely', 'LelyControl2'),
       expect: () => [
-        isA<AuthState>()
-            .having((s) => s.isLoading, 'isLoading', true)
-            .having((s) => s.errorMessage, 'errorMessage', null),
-        isA<AuthState>()
-            .having((s) => s.isLoading, 'isLoading', false)
-            .having((s) => s.isAuthenticated, 'isAuthenticated', true)
-            .having((s) => s.errorMessage, 'errorMessage', null),
+        isA<AuthLoading>(),
+        isA<AuthAuthenticated>()
+            .having((s) => s.user.username, 'username', 'Lely'),
       ],
     );
 
@@ -50,31 +43,26 @@ void main() {
       build: () => authCubit,
       act: (cubit) => cubit.login('Wrong', 'Credentials'),
       expect: () => [
-        isA<AuthState>()
-            .having((s) => s.isLoading, 'isLoading', true)
-            .having((s) => s.errorMessage, 'errorMessage', null),
-        isA<AuthState>()
-            .having((s) => s.isLoading, 'isLoading', false)
-            .having((s) => s.errorMessage, 'errorMessage', 'Invalid username or password'),
+        isA<AuthLoading>(),
+        isA<AuthError>()
+            .having((s) => s.message, 'message', 'Invalid username or password'),
       ],
     );
 
     blocTest<AuthCubit, AuthState>(
       'emits unauthenticated state when logout is called',
       build: () => authCubit,
-      seed: () => const AuthState(user: User(username: 'Lely')),
+      seed: () => AuthState.authenticated(const User(username: 'Lely')),
       act: (cubit) => cubit.logout(),
       expect: () => [
-        isA<AuthState>()
-            .having((s) => s.user, 'user', null)
-            .having((s) => s.isAuthenticated, 'isAuthenticated', false),
+        isA<AuthUnauthenticated>(),
       ],
     );
 
-    test('clearError removes error message', () {
-      authCubit.emit(const AuthState(errorMessage: 'Some error'));
+    test('clearError emits unauthenticated state', () {
+      authCubit.emit(const AuthState.error('Some error'));
       authCubit.clearError();
-      expect(authCubit.state.errorMessage, null);
+      expect(authCubit.state, isA<AuthUnauthenticated>());
     });
   });
 }
