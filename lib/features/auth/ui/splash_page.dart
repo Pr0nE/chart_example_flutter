@@ -20,18 +20,24 @@ class _SplashPageState extends State<SplashPage> {
     });
   }
 
+  void _onAuthStateChanged(BuildContext context, AuthState state) {
+    state.whenOrNull(
+      authenticated: (user) {
+        Navigator.of(context).pushReplacementNamed('/home');
+      },
+      unauthenticated: () {
+        Navigator.of(context).pushReplacementNamed('/login');
+      },
+      error: (message) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthCubit, AuthState>(
-      listener: (context, state) {
-        if (!state.isLoading) {
-          if (state.isAuthenticated) {
-            Navigator.of(context).pushReplacementNamed('/home');
-          } else {
-            Navigator.of(context).pushReplacementNamed('/login');
-          }
-        }
-      },
+      listener: _onAuthStateChanged,
       child: const Scaffold(
         body: Center(
           child: Column(

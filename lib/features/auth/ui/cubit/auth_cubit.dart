@@ -1,3 +1,4 @@
+import 'package:chart_example_flutter/features/auth/domain/models/user.dart';
 import 'package:chart_example_flutter/features/auth/ui/cubit/auth_state.dart';
 import 'package:chart_example_flutter/features/auth/domain/repository/auth_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -5,49 +6,52 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _repository;
 
-  AuthCubit(this._repository) : super(const AuthState());
+  AuthCubit(this._repository) : super(const AuthState.initial());
 
   Future<void> checkAuthStatus() async {
-    emit(state.copyWith(isLoading: true, errorMessage: null));
+    //temp
+    emit(AuthState.authenticated(User(username: 'username')));
+    return;
+
+    emit(const AuthState.loading());
 
     try {
       final user = await _repository.getCurrentUser();
-      emit(state.copyWith(user: user, isLoading: false, errorMessage: null));
+      if (user != null) {
+        emit(AuthState.authenticated(user));
+      } else {
+        emit(const AuthState.unauthenticated());
+      }
     } catch (e) {
-      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+      emit(AuthState.error(e.toString()));
     }
   }
 
   Future<void> login(String username, String password) async {
-    emit(state.copyWith(isLoading: true, errorMessage: null));
+    emit(const AuthState.loading());
 
     try {
       final user = await _repository.login(username, password);
       if (user != null) {
-        emit(state.copyWith(user: user, isLoading: false, errorMessage: null));
+        emit(AuthState.authenticated(user));
       } else {
-        emit(
-          state.copyWith(
-            isLoading: false,
-            errorMessage: 'Invalid username or password',
-          ),
-        );
+        emit(const AuthState.error('Invalid username or password'));
       }
     } catch (e) {
-      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+      emit(AuthState.error(e.toString()));
     }
   }
 
   Future<void> logout() async {
     try {
       await _repository.logout();
-      emit(const AuthState());
+      emit(const AuthState.unauthenticated());
     } catch (e) {
-      emit(state.copyWith(errorMessage: e.toString()));
+      emit(AuthState.error(e.toString()));
     }
   }
 
   void clearError() {
-    emit(state.copyWith(errorMessage: null));
+    emit(const AuthState.unauthenticated());
   }
 }
