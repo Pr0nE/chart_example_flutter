@@ -1,19 +1,13 @@
 import 'dart:convert';
 import 'package:chart_example_flutter/features/chart/domain/models/robot_data_point.dart';
+import 'package:chart_example_flutter/features/chart/domain/models/chart_data_response.dart';
 import 'package:chart_example_flutter/features/chart/domain/repository/chart_repository.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Constants for chart repository
 class _ChartRepositoryConstants {
-  // SharedPreferences keys
   static const String keyChartData = 'chart_data';
-
-  // Asset paths
   static const String assetSampleDataPath = 'assets/sample_data.json';
-
-  // JSON keys
-  static const String jsonKeyCollector = 'Collector';
 }
 
 class ChartRepositoryImpl implements ChartRepository {
@@ -66,7 +60,7 @@ class ChartRepositoryImpl implements ChartRepository {
     final jsonList = data.map((point) => point.toJson()).toList();
 
     await sharedPreferences.setString(
-      _ChartRepositoryConstants.keyChartData,
+      _ChartRepositoryConstants.keyChartData, 
       json.encode(jsonList),
     );
   }
@@ -78,13 +72,8 @@ class ChartRepositoryImpl implements ChartRepository {
       );
       final Map<String, dynamic> jsonData = json.decode(jsonString);
 
-      final List<dynamic> collectorData =
-          jsonData[_ChartRepositoryConstants.jsonKeyCollector] as List<dynamic>;
-
-      // Use fromJson directly - converters handle date and duration parsing
-      return collectorData
-          .map((item) => RobotDataPoint.fromJson(item as Map<String, dynamic>))
-          .toList();
+      final response = ChartDataResponse.fromJson(jsonData);
+      return response.collector;
     } catch (e) {
       return [];
     }

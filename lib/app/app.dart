@@ -60,9 +60,9 @@ class _RobotAnalyticsAppState extends State<RobotAnalyticsApp> {
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
             useMaterial3: true,
           ),
-          initialRoute: '/splash',
+          initialRoute: '/',
           routes: {
-            '/splash': (context) => const SplashPage(),
+            '/': (context) => const SplashPage(),
             '/login': (context) => const LoginPage(),
             '/home': (context) => const ChartPage(),
           },

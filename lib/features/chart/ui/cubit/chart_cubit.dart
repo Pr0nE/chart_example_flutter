@@ -9,20 +9,13 @@ class ChartCubit extends Cubit<ChartState> {
   ChartCubit(this._repository) : super(const ChartState());
 
   Future<void> loadChartData() async {
-    emit(state.copyWith(isLoading: true, errorMessage: null));
+    emit(state.clearError().copyWith(isLoading: true));
 
     try {
       final data = await _repository.getChartData();
-      emit(state.copyWith(
-        data: data,
-        isLoading: false,
-        errorMessage: null,
-      ));
+      emit(state.clearError().copyWith(data: data, isLoading: false));
     } catch (e) {
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: e.toString(),
-      ));
+      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
     }
   }
 
@@ -43,6 +36,6 @@ class ChartCubit extends Cubit<ChartState> {
   }
 
   void clearError() {
-    emit(state.copyWith(errorMessage: null));
+    emit(state.clearError());
   }
 }

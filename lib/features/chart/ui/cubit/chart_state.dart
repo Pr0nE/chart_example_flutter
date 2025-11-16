@@ -16,4 +16,12 @@ class ChartState with _$ChartState {
   bool get hasData => data.isNotEmpty;
   bool get hasError => errorMessage != null;
   bool get isInitial => data.isEmpty && !isLoading && errorMessage == null;
+
+  ChartState clearError() {
+    return ChartState(
+      data: data,
+      isLoading: isLoading,
+      errorMessage: null,
+    );
+  }
 }
