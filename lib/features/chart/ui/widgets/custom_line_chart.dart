@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:chart_example_flutter/features/chart/domain/models/robot_data_point.dart';
+import 'package:chart_example_flutter/features/chart/domain/models/chart_point.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' as intl;
 import 'dart:math' as math;
@@ -20,14 +21,42 @@ class _CustomLineChartState extends State<CustomLineChart> {
   double _zoomLevel = 1.0;
   final ScrollController _scrollController = ScrollController();
 
+  // Cache for chart points - only recalculate when size or data changes
+  List<ChartPoint> _cachedChartPoints = [];
+  double? _cachedWidth;
+  double? _cachedHeight;
+
   static const double _minZoom = 1.0;
   static const double _maxZoom = 5.0;
   static const double _zoomStep = 0.5;
 
   @override
+  void didUpdateWidget(CustomLineChart oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Invalidate cache if data changed
+    if (oldWidget.data != widget.data) {
+      _cachedChartPoints = [];
+      _cachedWidth = null;
+      _cachedHeight = null;
+    }
+  }
+
+  @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  /// Get cached chart points, recalculate only if size or data changed
+  List<ChartPoint> _getChartPoints(double width, double height) {
+    if (_cachedWidth != width ||
+        _cachedHeight != height ||
+        _cachedChartPoints.isEmpty) {
+      _cachedWidth = width;
+      _cachedHeight = height;
+      _cachedChartPoints = _calculateChartPoints(width, height);
+    }
+    return _cachedChartPoints;
   }
 
   void _zoomIn() {
@@ -135,7 +164,11 @@ class _CustomLineChartState extends State<CustomLineChart> {
           children: [
             CustomPaint(
               size: Size(width, height),
-              painter: _LineChartPainter(widget.data, _hoveredIndex),
+              painter: _LineChartPainter(
+                widget.data,
+                _hoveredIndex,
+                _getChartPoints(width, height),
+              ),
             ),
             if (_hoveredIndex != null && _tapPosition != null)
               _buildTooltip(width, height),
@@ -225,7 +258,8 @@ class _CustomLineChartState extends State<CustomLineChart> {
     }
   }
 
-  int? _findNearestPoint(Offset position, double width, double height) {
+  /// Calculate all chart point positions - cached for performance
+  List<ChartPoint> _calculateChartPoints(double width, double height) {
     const paddingLeft = 60.0;
     const paddingRight = 20.0;
     const paddingTop = 40.0;
@@ -237,28 +271,40 @@ class _CustomLineChartState extends State<CustomLineChart> {
     final sortedData = List<RobotDataPoint>.from(widget.data)
       ..sort((a, b) => a.date.compareTo(b.date));
 
-    if (sortedData.isEmpty) return null;
+    if (sortedData.isEmpty) return [];
 
     final maxHours = sortedData.map((e) => e.hoursActive).reduce(math.max);
     final minHours = sortedData.map((e) => e.hoursActive).reduce(math.min);
     final yRange = maxHours - minHours;
     final yMax = maxHours + (yRange * 0.2);
 
-    int? nearestIndex;
-    double minDistance = double.infinity;
-
-    for (int i = 0; i < sortedData.length; i++) {
+    return List.generate(sortedData.length, (i) {
       final x = paddingLeft + (chartWidth * i / (sortedData.length - 1));
       final normalizedValue = sortedData[i].hoursActive / yMax;
       final y = paddingTop + chartHeight - (chartHeight * normalizedValue);
+      return ChartPoint(
+        index: i,
+        x: x,
+        y: y,
+        data: sortedData[i],
+      );
+    });
+  }
 
+  int? _findNearestPoint(Offset position, double width, double height) {
+    final chartPoints = _getChartPoints(width, height);
+
+    int? nearestIndex;
+    double minDistance = double.infinity;
+
+    for (final point in chartPoints) {
       final distance = math.sqrt(
-        math.pow(position.dx - x, 2) + math.pow(position.dy - y, 2),
+        math.pow(position.dx - point.x, 2) + math.pow(position.dy - point.y, 2),
       );
 
       if (distance < 20 && distance < minDistance) {
         minDistance = distance;
-        nearestIndex = i;
+        nearestIndex = point.index;
       }
     }
 
@@ -329,15 +375,18 @@ class _CustomLineChartState extends State<CustomLineChart> {
 class _LineChartPainter extends CustomPainter {
   final List<RobotDataPoint> data;
   final int? hoveredIndex;
+  final List<ChartPoint> chartPoints;
   final double paddingLeft = 60;
   final double paddingRight = 20;
   final double paddingTop = 40;
   final double paddingBottom = 60;
 
-  _LineChartPainter(this.data, this.hoveredIndex);
+  _LineChartPainter(this.data, this.hoveredIndex, this.chartPoints);
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (chartPoints.isEmpty) return;
+
     final sortedData = List<RobotDataPoint>.from(data)
       ..sort((a, b) => a.date.compareTo(b.date));
 
@@ -353,9 +402,9 @@ class _LineChartPainter extends CustomPainter {
     _drawAxes(canvas, size, chartWidth, chartHeight);
     _drawYAxisLabels(canvas, size, chartHeight, yMax);
     _drawXAxisLabels(canvas, size, chartWidth, sortedData);
-    _drawGradientFill(canvas, size, chartWidth, chartHeight, sortedData, yMax);
-    _drawLine(canvas, size, chartWidth, chartHeight, sortedData, yMax);
-    _drawDataPoints(canvas, size, chartWidth, chartHeight, sortedData, yMax);
+    _drawGradientFill(canvas, size, chartWidth, chartHeight);
+    _drawLine(canvas, size, chartWidth, chartHeight);
+    _drawDataPoints(canvas, size, chartWidth, chartHeight);
   }
 
   void _drawGrid(
@@ -503,19 +552,16 @@ class _LineChartPainter extends CustomPainter {
     Size size,
     double chartWidth,
     double chartHeight,
-    List<RobotDataPoint> sortedData,
-    double yMax,
   ) {
+    if (chartPoints.isEmpty) return;
+
     final path = Path();
     final baseY = paddingTop + chartHeight;
 
     path.moveTo(paddingLeft, baseY);
 
-    for (int i = 0; i < sortedData.length; i++) {
-      final x = paddingLeft + (chartWidth * i / (sortedData.length - 1));
-      final normalizedValue = sortedData[i].hoursActive / yMax;
-      final y = paddingTop + chartHeight - (chartHeight * normalizedValue);
-      path.lineTo(x, y);
+    for (final point in chartPoints) {
+      path.lineTo(point.x, point.y);
     }
 
     path.lineTo(paddingLeft + chartWidth, baseY);
@@ -540,9 +586,9 @@ class _LineChartPainter extends CustomPainter {
     Size size,
     double chartWidth,
     double chartHeight,
-    List<RobotDataPoint> sortedData,
-    double yMax,
   ) {
+    if (chartPoints.isEmpty) return;
+
     final paint = Paint()
       ..color = Colors.blue
       ..strokeWidth = 3
@@ -552,15 +598,11 @@ class _LineChartPainter extends CustomPainter {
 
     final path = Path();
 
-    for (int i = 0; i < sortedData.length; i++) {
-      final x = paddingLeft + (chartWidth * i / (sortedData.length - 1));
-      final normalizedValue = sortedData[i].hoursActive / yMax;
-      final y = paddingTop + chartHeight - (chartHeight * normalizedValue);
-
+    for (int i = 0; i < chartPoints.length; i++) {
       if (i == 0) {
-        path.moveTo(x, y);
+        path.moveTo(chartPoints[i].x, chartPoints[i].y);
       } else {
-        path.lineTo(x, y);
+        path.lineTo(chartPoints[i].x, chartPoints[i].y);
       }
     }
 
@@ -572,27 +614,29 @@ class _LineChartPainter extends CustomPainter {
     Size size,
     double chartWidth,
     double chartHeight,
-    List<RobotDataPoint> sortedData,
-    double yMax,
   ) {
-    for (int i = 0; i < sortedData.length; i++) {
-      final x = paddingLeft + (chartWidth * i / (sortedData.length - 1));
-      final normalizedValue = sortedData[i].hoursActive / yMax;
-      final y = paddingTop + chartHeight - (chartHeight * normalizedValue);
-
-      final isHovered = i == hoveredIndex;
+    for (final point in chartPoints) {
+      final isHovered = point.index == hoveredIndex;
 
       // Draw outer circle (white background)
       final outerPaint = Paint()
         ..color = Colors.white
         ..style = PaintingStyle.fill;
-      canvas.drawCircle(Offset(x, y), isHovered ? 8 : 6, outerPaint);
+      canvas.drawCircle(
+        Offset(point.x, point.y),
+        isHovered ? 8 : 6,
+        outerPaint,
+      );
 
       // Draw inner circle (blue fill)
       final innerPaint = Paint()
         ..color = isHovered ? Colors.blueAccent : Colors.blue
         ..style = PaintingStyle.fill;
-      canvas.drawCircle(Offset(x, y), isHovered ? 6 : 4, innerPaint);
+      canvas.drawCircle(
+        Offset(point.x, point.y),
+        isHovered ? 6 : 4,
+        innerPaint,
+      );
 
       // Draw highlight ring for hovered point
       if (isHovered) {
@@ -600,7 +644,7 @@ class _LineChartPainter extends CustomPainter {
           ..color = Colors.blue.withOpacity(0.3)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2;
-        canvas.drawCircle(Offset(x, y), 10, highlightPaint);
+        canvas.drawCircle(Offset(point.x, point.y), 10, highlightPaint);
       }
     }
   }
