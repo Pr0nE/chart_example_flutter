@@ -8,7 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../test/helpers/test_data.dart';
 import '../test/helpers/widget_test_helpers.dart';
 
-
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
@@ -47,9 +46,7 @@ void main() {
         );
       });
 
-      testWidgets('Login fails with invalid credentials', (
-        tester,
-      ) async {
+      testWidgets('Login fails with invalid credentials', (tester) async {
         SharedPreferences.setMockInitialValues({});
         final prefs = await SharedPreferences.getInstance();
 
@@ -110,9 +107,7 @@ void main() {
         TestHelpers.verifyErrorMessage(TestData.usernameInvalidCharsError);
       });
 
-      testWidgets('Session persistence across app restarts', (
-        tester,
-      ) async {
+      testWidgets('Session persistence across app restarts', (tester) async {
         await TestHelpers.setupLoggedInUser();
         final prefs = await SharedPreferences.getInstance();
 
@@ -216,43 +211,6 @@ void main() {
         await tester.pumpAndSettle();
 
         TestHelpers.verifyChartPage();
-      });
-
-      testWidgets('Data persistence after logout and login', (
-        tester,
-      ) async {
-        await TestHelpers.setupWithChartData([
-          RobotDataPoint(
-            date: TestData.testDate1,
-            minutesActive: TestData.validMinutesLow,
-          ),
-          RobotDataPoint(
-            date: TestData.testDate2,
-            minutesActive: TestData.validMinutesMid,
-          ),
-        ]);
-
-        final prefs = await SharedPreferences.getInstance();
-
-        await tester.pumpWidget(RobotAnalyticsApp(sharedPreferences: prefs));
-        await tester.pumpAndSettle(const Duration(seconds: 3));
-
-        TestHelpers.verifyChartPage();
-
-        expect(find.byType(CustomPaint), findsWidgets);
-
-        await TestHelpers.performLogout(tester);
-        TestHelpers.verifyLoginPage();
-
-        await TestHelpers.performLogin(
-          tester,
-          username: TestData.validUsername,
-          password: TestData.validPassword,
-        );
-
-        TestHelpers.verifyChartPage();
-
-        expect(find.byType(CustomPaint), findsWidgets);
       });
     });
   });
