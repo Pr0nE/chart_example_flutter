@@ -6,6 +6,8 @@ import 'package:chart_example_flutter/features/auth/ui/cubit/auth_state.dart';
 import 'package:chart_example_flutter/features/auth/domain/models/user.dart';
 import 'package:chart_example_flutter/features/auth/domain/repository/auth_repository.dart';
 
+import '../../helpers/test_data.dart';
+
 class MockAuthRepository extends Mock implements AuthRepository {}
 
 void main() {
@@ -30,17 +32,21 @@ void main() {
       'emits loading then authenticated states when login succeeds',
       build: () {
         when(
-          () => mockAuthRepository.login('Lely', 'LelyControl2'),
-        ).thenAnswer((_) async => const User(username: 'Lely'));
+          () => mockAuthRepository.login(
+            TestData.validUsername,
+            TestData.validPassword,
+          ),
+        ).thenAnswer((_) async => User(username: TestData.validUsername));
         return AuthCubit(mockAuthRepository);
       },
-      act: (cubit) => cubit.login('Lely', 'LelyControl2'),
+      act: (cubit) =>
+          cubit.login(TestData.validUsername, TestData.validPassword),
       expect: () => [
         isA<AuthLoading>(),
         isA<AuthAuthenticated>().having(
           (s) => s.user.username,
           'username',
-          'Lely',
+          TestData.validUsername,
         ),
       ],
     );
@@ -49,17 +55,21 @@ void main() {
       'emits loading then error states when login fails',
       build: () {
         when(
-          () => mockAuthRepository.login('Wrong', 'Credentials'),
+          () => mockAuthRepository.login(
+            TestData.invalidUsername,
+            TestData.invalidPassword,
+          ),
         ).thenAnswer((_) async => null);
         return AuthCubit(mockAuthRepository);
       },
-      act: (cubit) => cubit.login('Wrong', 'Credentials'),
+      act: (cubit) =>
+          cubit.login(TestData.invalidUsername, TestData.invalidPassword),
       expect: () => [
         isA<AuthLoading>(),
         isA<AuthError>().having(
           (s) => s.message,
           'message',
-          'Invalid username or password',
+          TestData.invalidCredentialsError,
         ),
       ],
     );
@@ -70,7 +80,8 @@ void main() {
         when(() => mockAuthRepository.logout()).thenAnswer((_) async {});
         return AuthCubit(mockAuthRepository);
       },
-      seed: () => AuthState.authenticated(const User(username: 'Lely')),
+      seed: () =>
+          AuthState.authenticated(User(username: TestData.validUsername)),
       act: (cubit) => cubit.logout(),
       expect: () => [isA<AuthUnauthenticated>()],
     );

@@ -1,11 +1,13 @@
 import 'package:chart_example_flutter/app/app.dart';
+import 'package:chart_example_flutter/features/chart/domain/models/robot_data_point.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'helpers/test_data.dart';
-import 'helpers/test_helpers.dart';
+import '../test/helpers/test_data.dart';
+import '../test/helpers/widget_test_helpers.dart';
+
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -187,13 +189,13 @@ void main() {
 
       testWidgets('Duplicate date validation', (tester) async {
         await TestHelpers.setupWithChartData([
-          ChartDataPoint(
+          RobotDataPoint(
             date: TestData.testDate1,
-            minutes: TestData.validMinutesLow,
+            minutesActive: TestData.validMinutesLow,
           ),
-          ChartDataPoint(
+          RobotDataPoint(
             date: TestData.testDate2,
-            minutes: TestData.validMinutesMid,
+            minutesActive: TestData.validMinutesMid,
           ),
         ]);
         final prefs = await SharedPreferences.getInstance();
@@ -220,13 +222,13 @@ void main() {
         tester,
       ) async {
         await TestHelpers.setupWithChartData([
-          ChartDataPoint(
+          RobotDataPoint(
             date: TestData.testDate1,
-            minutes: TestData.validMinutesLow,
+            minutesActive: TestData.validMinutesLow,
           ),
-          ChartDataPoint(
+          RobotDataPoint(
             date: TestData.testDate2,
-            minutes: TestData.validMinutesMid,
+            minutesActive: TestData.validMinutesMid,
           ),
         ]);
 

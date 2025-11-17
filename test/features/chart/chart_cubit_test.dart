@@ -6,6 +6,8 @@ import 'package:chart_example_flutter/features/chart/domain/repository/chart_rep
 import 'package:chart_example_flutter/features/chart/domain/models/robot_data_point.dart';
 import 'package:chart_example_flutter/features/chart/ui/cubit/chart_state.dart';
 
+import '../../helpers/test_data.dart';
+
 class MockChartRepository extends Mock implements ChartRepository {}
 
 void main() {
@@ -110,7 +112,7 @@ void main() {
             .having(
               (s) => s.errorMessage,
               'errorMessage',
-              'Date already exists',
+              TestData.duplicateDateError,
             )
             .having((s) => s.hasData, 'hasData', true),
       ],
