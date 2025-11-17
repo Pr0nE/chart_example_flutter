@@ -29,7 +29,7 @@ class _CustomLineChartState extends State<CustomLineChart> {
   static const double _minZoom = 1.0;
   static const double _maxZoom = 5.0;
   static const double _zoomStep = 0.5;
-  static const double _optimalPointSpacing = 50.0; // Target pixels between points
+  static const double _optimalPointSpacing = 50.0;
 
   @override
   void didUpdateWidget(CustomLineChart oldWidget) {

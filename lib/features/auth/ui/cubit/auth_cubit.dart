@@ -1,4 +1,3 @@
-import 'package:chart_example_flutter/features/auth/domain/models/user.dart';
 import 'package:chart_example_flutter/features/auth/ui/cubit/auth_state.dart';
 import 'package:chart_example_flutter/features/auth/domain/repository/auth_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
