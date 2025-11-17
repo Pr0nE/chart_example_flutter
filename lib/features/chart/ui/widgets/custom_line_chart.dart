@@ -24,10 +24,12 @@ class _CustomLineChartState extends State<CustomLineChart> {
   List<ChartPoint> _cachedChartPoints = [];
   double? _cachedWidth;
   double? _cachedHeight;
+  bool _initialZoomSet = false;
 
   static const double _minZoom = 1.0;
   static const double _maxZoom = 5.0;
   static const double _zoomStep = 0.5;
+  static const double _optimalPointSpacing = 50.0; // Target pixels between points
 
   @override
   void didUpdateWidget(CustomLineChart oldWidget) {
@@ -36,6 +38,7 @@ class _CustomLineChartState extends State<CustomLineChart> {
       _cachedChartPoints = [];
       _cachedWidth = null;
       _cachedHeight = null;
+      _initialZoomSet = false;
     }
   }
 
@@ -81,6 +84,34 @@ class _CustomLineChartState extends State<CustomLineChart> {
     });
   }
 
+  /// Calculates the optimal zoom level based on available width and number of data points.
+  /// Returns a zoom level that ensures all points are visible with adequate spacing.
+  double _calculateOptimalZoom(double width) {
+    if (widget.data.isEmpty) return _minZoom;
+
+    final dataPointCount = widget.data.length;
+    if (dataPointCount <= 1) return _minZoom;
+
+    // Account for chart padding when calculating available width
+    const paddingLeft = 60.0;
+    const paddingRight = 20.0;
+    final availableWidth = width - paddingLeft - paddingRight;
+
+    // Calculate current spacing between points at zoom level 1.0
+    final currentSpacing = availableWidth / (dataPointCount - 1);
+
+    // If current spacing is already adequate (>= 40px), no zoom needed
+    if (currentSpacing >= 40.0) {
+      return _minZoom;
+    }
+
+    // Calculate zoom needed to achieve optimal spacing
+    final requiredZoom = _optimalPointSpacing / currentSpacing;
+
+    // Clamp between min and max zoom levels
+    return requiredZoom.clamp(_minZoom, _maxZoom);
+  }
+
   bool get _isZoomed => _zoomLevel > _minZoom;
 
   @override
@@ -91,6 +122,18 @@ class _CustomLineChartState extends State<CustomLineChart> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        // Set initial zoom level once we have the width
+        if (!_initialZoomSet && constraints.maxWidth > 0) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                _zoomLevel = _calculateOptimalZoom(constraints.maxWidth);
+                _initialZoomSet = true;
+              });
+            }
+          });
+        }
+
         final chartHeight = constraints.maxHeight;
         final chartWidth = constraints.maxWidth * _zoomLevel;
 
@@ -101,6 +144,7 @@ class _CustomLineChartState extends State<CustomLineChart> {
                     controller: _scrollController,
                     thumbVisibility: true,
                     trackVisibility: true,
+                    interactive: true,
                     thickness: 12,
                     radius: const Radius.circular(6),
                     child: SingleChildScrollView(

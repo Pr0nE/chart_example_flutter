@@ -9,10 +9,6 @@ class AuthCubit extends Cubit<AuthState> {
   AuthCubit(this._repository) : super(const AuthState.initial());
 
   Future<void> checkAuthStatus() async {
-    //temp
-    emit(AuthState.authenticated(User(username: 'username')));
-    return;
-
     emit(const AuthState.loading());
 
     try {
